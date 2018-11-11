@@ -12,6 +12,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Camera;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -210,7 +211,8 @@ public class CameraActivity extends AppCompatActivity {
                 private void save(byte[] bytes) throws IOException{
                     FileOutputStream outputStream = new FileOutputStream(file);
                     try{
-                        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                        Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                        Bitmap bitmap = RotateBitmap(bmp, 90);
                         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
                         Toast.makeText(CameraActivity.this, "saved " + file, Toast.LENGTH_SHORT).show();
                     } finally {
@@ -253,6 +255,13 @@ public class CameraActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+    }
+
+    public static Bitmap RotateBitmap(Bitmap source, float angle)
+    {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
     }
 
     private void createImageGallery() {
