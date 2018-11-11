@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Camera;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
@@ -93,6 +95,7 @@ public class CameraActivity extends AppCompatActivity {
     private HandlerThread mBackgroundThread;
 
     private File galleryFolder;
+    private File path;
 
     CameraDevice.StateCallback stateCallBack = new CameraDevice.StateCallback() {
         @Override
@@ -122,6 +125,12 @@ public class CameraActivity extends AppCompatActivity {
 
         textureView = (TextureView) findViewById(R.id.texture_view);
         assert textureView != null;
+
+        path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM + "/DressMe/");
+        if (!path.exists())
+        {
+            path.mkdir();
+        }
 
         textureView.setSurfaceTextureListener(textureListener);
         captureButt = (FloatingActionButton) findViewById(R.id.fab_take_photo);
@@ -169,17 +178,20 @@ public class CameraActivity extends AppCompatActivity {
             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
             String imageFileName = "image_" + timeStamp + ".jpg";
 
-            file = new File(getFilesDir(), imageFileName);
+            file = new File(path, imageFileName);
+
             ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
                 @Override
                 public void onImageAvailable(ImageReader reader) {
                     Image image = null;
+                    OutputStream out = null;
                     try{
                         image = reader.acquireLatestImage();
                         ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                         byte[] bytes = new byte[buffer.capacity()];
                         buffer.get(bytes);
                         save(bytes);
+
                     } catch(FileNotFoundException e)
                     {
                         e.printStackTrace();
@@ -196,12 +208,14 @@ public class CameraActivity extends AppCompatActivity {
                 }
 
                 private void save(byte[] bytes) throws IOException{
-                    OutputStream outputStream = null;
+                    FileOutputStream outputStream = new FileOutputStream(file);
                     try{
-                        outputStream = new FileOutputStream(file);
-                        outputStream.write(bytes);
+                        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+                        Toast.makeText(CameraActivity.this, "saved " + file, Toast.LENGTH_SHORT).show();
                     } finally {
                         if(outputStream != null)
+                            outputStream.flush();
                             outputStream.close();
                     }
                 }
@@ -212,7 +226,6 @@ public class CameraActivity extends AppCompatActivity {
                 @Override
                 public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
                     super.onCaptureCompleted(session, request, result);
-                    Toast.makeText(CameraActivity.this, "saved" + file, Toast.LENGTH_SHORT).show();
                     createCameraPreview();
                 }
             };
