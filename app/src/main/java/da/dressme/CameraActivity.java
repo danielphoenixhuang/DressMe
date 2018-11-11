@@ -31,6 +31,7 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaScannerConnection;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -52,8 +53,15 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+
 import org.w3c.dom.Text;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -98,6 +106,8 @@ public class CameraActivity extends AppCompatActivity {
     private File galleryFolder;
     private File path;
 
+    private StorageReference mStorageRef;
+
     CameraDevice.StateCallback stateCallBack = new CameraDevice.StateCallback() {
         @Override
         public void onOpened(@NonNull CameraDevice camera) {
@@ -126,6 +136,8 @@ public class CameraActivity extends AppCompatActivity {
 
         textureView = (TextureView) findViewById(R.id.texture_view);
         assert textureView != null;
+
+        mStorageRef = FirebaseStorage.getInstance().getReference();
 
         path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM + "/DressMe/");
         //path = new File(getFilesDir(), "/DressMe/");
@@ -178,7 +190,7 @@ public class CameraActivity extends AppCompatActivity {
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
 
             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-            String imageFileName = "image_" + timeStamp + ".jpeg";
+            final String imageFileName = "image_" + timeStamp + ".jpeg";
 
             file = new File(path, imageFileName);
 
@@ -193,7 +205,7 @@ public class CameraActivity extends AppCompatActivity {
                         byte[] bytes = new byte[buffer.capacity()];
                         buffer.get(bytes);
                         save(bytes);
-
+                        upload(bytes);
                     } catch(FileNotFoundException e)
                     {
                         e.printStackTrace();
@@ -207,6 +219,33 @@ public class CameraActivity extends AppCompatActivity {
                                 image.close();
                         }
                     }
+                }
+
+                private void upload(byte[] bytes) {
+                    Uri urifile = Uri.fromFile(file);
+                    StorageReference uploadRef = mStorageRef.child("uploads/" + imageFileName);
+                    Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                    final Bitmap bitmap = RotateBitmap(bmp, 90);
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+                    byte[] byteArray = stream.toByteArray();
+
+
+                    uploadRef.putBytes(byteArray)
+                            .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                                @Override
+                                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                    Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                                    Toast.makeText(CameraActivity.this, "Uploaded", Toast.LENGTH_SHORT).show();
+                                    bitmap.recycle();
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+
+                                }
+                            });
                 }
 
                 private void save(byte[] bytes) throws IOException{
