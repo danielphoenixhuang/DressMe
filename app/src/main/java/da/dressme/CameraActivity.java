@@ -128,6 +128,7 @@ public class CameraActivity extends AppCompatActivity {
         assert textureView != null;
 
         path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM + "/DressMe/");
+        //path = new File(getFilesDir(), "/DressMe/");
         if (!path.exists())
         {
             path.mkdir();
@@ -177,7 +178,7 @@ public class CameraActivity extends AppCompatActivity {
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
 
             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-            String imageFileName = "image_" + timeStamp + ".jpg";
+            String imageFileName = "image_" + timeStamp + ".jpeg";
 
             file = new File(path, imageFileName);
 
@@ -214,10 +215,10 @@ public class CameraActivity extends AppCompatActivity {
                         Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                         Bitmap bitmap = RotateBitmap(bmp, 90);
                         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+                        outputStream.flush();
                         Toast.makeText(CameraActivity.this, "saved " + file, Toast.LENGTH_SHORT).show();
                     } finally {
                         if(outputStream != null)
-                            outputStream.flush();
                             outputStream.close();
                     }
                 }
