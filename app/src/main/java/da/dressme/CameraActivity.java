@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -53,8 +54,15 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.Continuation;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -73,6 +81,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -107,6 +116,14 @@ public class CameraActivity extends AppCompatActivity {
     private File path;
 
     private StorageReference mStorageRef;
+    private StorageReference userFolderStorageRef;
+    private DatabaseReference userDatabaseRef;
+
+    private UploadTask uploadTask;
+
+    private FirebaseAuth mAuth = FirebaseAuth.getInstance();
+    private FirebaseUser user;
+    private String userID;
 
     CameraDevice.StateCallback stateCallBack = new CameraDevice.StateCallback() {
         @Override
@@ -146,6 +163,8 @@ public class CameraActivity extends AppCompatActivity {
             path.mkdir();
         }
 
+        authenticate();
+
         textureView.setSurfaceTextureListener(textureListener);
         captureButt = (FloatingActionButton) findViewById(R.id.fab_take_photo);
         captureButt.setOnClickListener(new View.OnClickListener() {
@@ -155,6 +174,34 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void authenticate() {
+        //If user is not logged in, go to login activity
+        mAuth = FirebaseAuth.getInstance();
+        if (mAuth.getCurrentUser() == null)
+        {
+            finish();
+            startActivity(new Intent(this, EmailLoginActivity.class));
+        }
+
+        // Collect userID
+        user = mAuth.getCurrentUser();
+
+        // If userID is null attempt to log them in again, else set the userID field
+        if(user==null) {
+            userID = "";
+            finish();
+            startActivity(new Intent(this, EmailLoginActivity.class));
+
+        }
+        else {
+            userID = user.getUid();
+        }
+
+        //Assign Storage Reference to User's folder
+        userFolderStorageRef = mStorageRef.child(userID);
+        userDatabaseRef = FirebaseDatabase.getInstance().getReference().child(userID).child("uploads");
     }
 
     private void takePicture() {
@@ -223,21 +270,21 @@ public class CameraActivity extends AppCompatActivity {
 
                 private void upload(byte[] bytes) {
                     Uri urifile = Uri.fromFile(file);
-                    StorageReference uploadRef = mStorageRef.child("uploads/" + imageFileName);
+                    final StorageReference uploadRef = userFolderStorageRef.child("uploads/" + imageFileName);
                     Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                     final Bitmap bitmap = RotateBitmap(bmp, 90);
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
                     byte[] byteArray = stream.toByteArray();
 
-
-                    uploadRef.putBytes(byteArray)
-                            .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    uploadTask = uploadRef.putBytes(byteArray);
+                    uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                                 @Override
                                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                                    Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                                    //Uri downloadUrl = taskSnapshot.getDownloadUrl();
                                     Toast.makeText(CameraActivity.this, "Uploaded", Toast.LENGTH_SHORT).show();
                                     bitmap.recycle();
+                                    updateDatabase(uploadRef);
                                 }
                             })
                             .addOnFailureListener(new OnFailureListener() {
@@ -246,6 +293,41 @@ public class CameraActivity extends AppCompatActivity {
 
                                 }
                             });
+                }
+
+                private void updateDatabase(final StorageReference uLR) {
+                    Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+                        @Override
+                        public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                            if (!task.isSuccessful()) {
+                                throw task.getException();
+                            }
+
+                            // Continue with the task to get the download URL
+                            return uLR.getDownloadUrl();
+                        }
+                    }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Uri> task) {
+                            if (task.isSuccessful()) {
+                                Uri downloadUri = task.getResult();
+                                final String key = userDatabaseRef.push().getKey();
+                                String imageKey = key;
+                                HashMap<String, Object> updates = new HashMap<>();
+                                updates.put("/users/" + userID + "/uploads/" + key, downloadUri.toString());
+                                updates.put("/uploads/" + key, downloadUri.toString());
+
+                                FirebaseDatabase.getInstance().getReference().updateChildren(updates).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        Toast.makeText(CameraActivity.this, "Database Updated", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+
+                            } else {
+                            }
+                        }
+                    });
                 }
 
                 private void save(byte[] bytes) throws IOException{
