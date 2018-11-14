@@ -6,6 +6,9 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -17,16 +20,21 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 
 import static da.dressme.AuthenticationUtil.authenticateAndGetUserID;
@@ -48,6 +56,12 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseReference userDatabaseRef;
 
     private String imageFileName;
+
+    private RecyclerView gallery;
+    private LinearLayoutManager fLinearManager;
+    private List<String> picList;
+
+    private OutfitGalleryAdapter GA;
 
     private Uri filePath;
     public final static int PICK_IMAGE_REQUEST_CODE = 420;
@@ -75,6 +89,45 @@ public class MainActivity extends AppCompatActivity {
                 pickPhoto();
             }
         });
+        
+        setUpRecyclerView();
+    }
+
+    private void setUpRecyclerView() {
+        gallery = findViewById(R.id.recyclerView_outfits_gallery);
+        FirebaseDatabase data = FirebaseDatabase.getInstance();
+
+        gallery.setHasFixedSize(true);
+
+        fLinearManager = new LinearLayoutManager(this);
+        fLinearManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+        gallery.setLayoutManager(fLinearManager);
+
+        picList = new ArrayList<>();
+
+        DatabaseReference ref = data.getReference().child("users").child(userID).child("uploads");
+        ref.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                picList.clear();
+                for (DataSnapshot test: dataSnapshot.getChildren())
+                {
+                    picList.add(test.getValue().toString());
+                    //Toast.makeText(getApplicationContext(), test.getValue().toString(), Toast.LENGTH_LONG).show();
+                }
+
+                GA.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+        GA = new OutfitGalleryAdapter(this, picList, userID);
+        gallery.setAdapter(GA);
+        gallery.setItemAnimator(new DefaultItemAnimator());
 
     }
 
