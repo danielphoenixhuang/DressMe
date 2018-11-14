@@ -125,6 +125,8 @@ public class CameraActivity extends AppCompatActivity {
     private FirebaseUser user;
     private String userID;
 
+    private String imgname;
+
     CameraDevice.StateCallback stateCallBack = new CameraDevice.StateCallback() {
         @Override
         public void onOpened(@NonNull CameraDevice camera) {
@@ -238,6 +240,7 @@ public class CameraActivity extends AppCompatActivity {
 
             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
             final String imageFileName = "image_" + timeStamp + ".jpeg";
+            imgname = imageFileName;
 
             file = new File(path, imageFileName);
 
@@ -314,13 +317,18 @@ public class CameraActivity extends AppCompatActivity {
                                 final String key = userDatabaseRef.push().getKey();
                                 String imageKey = key;
                                 HashMap<String, Object> updates = new HashMap<>();
-                                updates.put("/users/" + userID + "/uploads/" + key, downloadUri.toString());
+                                updates.put("/users/" + userID + "/uploads/" + key, imageFileName);
                                 updates.put("/uploads/" + key, downloadUri.toString());
 
                                 FirebaseDatabase.getInstance().getReference().updateChildren(updates).addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
                                     public void onSuccess(Void aVoid) {
                                         Toast.makeText(CameraActivity.this, "Database Updated", Toast.LENGTH_SHORT).show();
+                                    }
+                                }).addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Toast.makeText(CameraActivity.this, "Database upload failed", Toast.LENGTH_SHORT).show();
                                     }
                                 });
 

@@ -10,18 +10,23 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.Continuation;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.squareup.picasso.Picasso;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
 
 import static da.dressme.AuthenticationUtil.authenticateAndGetUserID;
@@ -29,14 +34,20 @@ import static da.dressme.AuthenticationUtil.authenticateAndGetUserID;
 public class MainActivity extends AppCompatActivity {
 
     private Button cameraButton;
+    private Button uploadButton;
     private FirebaseAuth mAuth = FirebaseAuth.getInstance();
     private FirebaseUser user;
     private String userID;
 
     private StorageReference uploadRef;
-    private StorageReference storageRef = FirebaseStorage.getInstance().getReference();
+    private StorageReference mStorageRef = FirebaseStorage.getInstance().getReference();
 
     private UploadTask uploadTask;
+
+    private StorageReference userFolderStorageRef;
+    private DatabaseReference userDatabaseRef;
+
+    private String imageFileName;
 
     private Uri filePath;
     public final static int PICK_IMAGE_REQUEST_CODE = 420;
@@ -56,6 +67,15 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(MainActivity.this, CameraActivity.class));
             }
         });
+
+        uploadButton = findViewById(R.id.uploadbutt);
+        uploadButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pickPhoto();
+            }
+        });
+
     }
 
     private void pickPhoto() {
@@ -85,10 +105,10 @@ public class MainActivity extends AppCompatActivity {
             progressDialog.setTitle("Uploading your ugly photo....");
             progressDialog.show();
 
-            uploadRef = storageRef.child(userID).child("uploads");
-
             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-            final String imageFileName = "image_" + timeStamp + ".jpeg";
+            imageFileName = "image_" + timeStamp + ".jpeg";
+
+            uploadRef = mStorageRef.child(userID).child("uploads/" + imageFileName);
 
             uploadTask = uploadRef.putFile(filePath);
                     uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -96,8 +116,8 @@ public class MainActivity extends AppCompatActivity {
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                             progressDialog.dismiss();
                             Toast.makeText(getApplicationContext(), "Thanks for clogging our servers", Toast.LENGTH_LONG).show();
-
-                            uploadRef.child("users").child(userID).child("profilePicture").setValue("profilePic.png");
+                            updateDatabase(uploadRef);
+                            //uploadRef.child("users").child(userID).child("profilePicture").setValue("profilePic.png");
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -119,6 +139,46 @@ public class MainActivity extends AppCompatActivity {
         {
             Toast.makeText(getApplicationContext(), "Something is broken!", Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void updateDatabase(final StorageReference uLR) {
+        Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+            @Override
+            public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                if (!task.isSuccessful()) {
+                    throw task.getException();
+                }
+
+                // Continue with the task to get the download URL
+                return uLR.getDownloadUrl();
+            }
+        }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+            @Override
+            public void onComplete(@NonNull Task<Uri> task) {
+                if (task.isSuccessful()) {
+                    Uri downloadUri = task.getResult();
+                    final String key = userDatabaseRef.push().getKey();
+                    String imageKey = key;
+                    HashMap<String, Object> updates = new HashMap<>();
+                    updates.put("/users/" + userID + "/uploads/" + key, imageFileName);
+                    updates.put("/uploads/" + key, downloadUri.toString());
+
+                    FirebaseDatabase.getInstance().getReference().updateChildren(updates).addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                            Toast.makeText(MainActivity.this, "Database Updated", Toast.LENGTH_SHORT).show();
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Toast.makeText(MainActivity.this, "Database upload failed", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+                } else {
+                }
+            }
+        });
     }
 
     private void authenticate() {
@@ -143,5 +203,9 @@ public class MainActivity extends AppCompatActivity {
         else {
             userID = user.getUid();
         }
+
+        //Assign Storage Reference to User's folder
+        userFolderStorageRef = mStorageRef.child(userID);
+        userDatabaseRef = FirebaseDatabase.getInstance().getReference().child(userID).child("uploads");
     }
 }
