@@ -52,6 +52,7 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.Continuation;
@@ -115,6 +116,8 @@ public class CameraActivity extends AppCompatActivity {
     private File galleryFolder;
     private File path;
 
+    private Button galleryButt;
+
     private StorageReference mStorageRef;
     private StorageReference userFolderStorageRef;
     private DatabaseReference userDatabaseRef;
@@ -168,11 +171,20 @@ public class CameraActivity extends AppCompatActivity {
         authenticate();
 
         textureView.setSurfaceTextureListener(textureListener);
+
         captureButt = (FloatingActionButton) findViewById(R.id.fab_take_photo);
         captureButt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 takePicture();
+            }
+        });
+        galleryButt = (Button) findViewById(R.id.button_goToGallery);
+        galleryButt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //finish();
+                startActivity(new Intent(CameraActivity.this, MainActivity.class));
             }
         });
 

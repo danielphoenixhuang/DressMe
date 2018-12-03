@@ -97,10 +97,10 @@ public class MainActivity extends AppCompatActivity {
         gallery = findViewById(R.id.recyclerView_outfits_gallery);
         FirebaseDatabase data = FirebaseDatabase.getInstance();
 
-        gallery.setHasFixedSize(true);
+        gallery.setHasFixedSize(false);
 
         fLinearManager = new LinearLayoutManager(this);
-        fLinearManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+        fLinearManager.setOrientation(LinearLayoutManager.VERTICAL);
         gallery.setLayoutManager(fLinearManager);
 
         picList = new ArrayList<>();
