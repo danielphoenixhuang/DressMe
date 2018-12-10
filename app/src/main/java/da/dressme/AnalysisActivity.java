@@ -19,6 +19,8 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
 
+import static da.dressme.ColorAnalysisClass.colorMatch;
+
 public class AnalysisActivity extends AppCompatActivity {
 
     private Intent receivedIntent;
@@ -32,6 +34,7 @@ public class AnalysisActivity extends AppCompatActivity {
     private ImageView outfitImage;
     private ImageView topImage;
     private ImageView bottomImage;
+    private TextView matchingStatus;
     private TextView topTextColor1;
     private TextView topTextColor2;
     private TextView bottomTextColor1;
@@ -50,6 +53,7 @@ public class AnalysisActivity extends AppCompatActivity {
         topTextColor2 = findViewById(R.id.textView_topColor2);
         bottomTextColor1 = findViewById(R.id.textView_bottomColor1);
         bottomTextColor2 = findViewById(R.id.textView_bottomColor2);
+        matchingStatus = findViewById(R.id.textView_matchingStatus);
 
         receivedIntent = getIntent();
         receivedUserID = receivedIntent.getStringExtra("userID");
@@ -98,10 +102,16 @@ public class AnalysisActivity extends AppCompatActivity {
         outfitDBRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                topTextColor1.setText(dataSnapshot.child("top_color_1").getValue().toString());
-                topTextColor2.setText(dataSnapshot.child("top_color_2").getValue().toString());
-                bottomTextColor1.setText(dataSnapshot.child("bot_color_1").getValue().toString());
-                bottomTextColor1.setText(dataSnapshot.child("bot_color_1").getValue().toString());
+                String color1 = dataSnapshot.child("top_color_1").getValue().toString();
+                String color2 = dataSnapshot.child("top_color_2").getValue().toString();
+                String color3 = dataSnapshot.child("bot_color_1").getValue().toString();
+                String color4 = dataSnapshot.child("bot_color_2").getValue().toString();
+                topTextColor1.setText(color1);
+                topTextColor2.setText(color2);
+                bottomTextColor1.setText(color3);
+                bottomTextColor2.setText(color4);
+
+                matchingStatus.setText(colorMatch(color1, color2, color3, color4));
             }
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {

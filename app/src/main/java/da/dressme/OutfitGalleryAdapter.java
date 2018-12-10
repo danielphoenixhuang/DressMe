@@ -27,6 +27,8 @@ import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
+import static da.dressme.ColorAnalysisClass.colorMatch;
+
 public class OutfitGalleryAdapter extends Adapter<OutfitGalleryAdapter.ViewHolder> {
 
     private List<String> outfitReferences;
@@ -90,11 +92,18 @@ public class OutfitGalleryAdapter extends Adapter<OutfitGalleryAdapter.ViewHolde
         DatabaseReference outfitDBRef = database.getReference().child("outfits").child(outfitID);
         StorageReference outfitStorageRef = storage.getReference().child(userID).child("outfits").child(outfitID);
 
-        outfitDBRef.child("downloadURL").addListenerForSingleValueEvent(new ValueEventListener() {
+        outfitDBRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                String url = dataSnapshot.getValue().toString();
+                String url = dataSnapshot.child("downloadURL").getValue().toString();
                 Picasso.get().load(url).fit().into(holder.galleryItem);
+
+                String topColor1 = dataSnapshot.child("top_color_1").getValue().toString();
+                String topColor2 = dataSnapshot.child("top_color_2").getValue().toString();
+                String botColor1 = dataSnapshot.child("bot_color_1").getValue().toString();
+                String botColor2 = dataSnapshot.child("bot_color_2").getValue().toString();
+
+                holder.testText.setText(colorMatch(topColor1, topColor2, botColor1, botColor2));
             }
 
             @Override
