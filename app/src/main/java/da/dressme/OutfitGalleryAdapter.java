@@ -10,9 +10,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
@@ -21,16 +27,19 @@ import java.util.List;
 
 public class OutfitGalleryAdapter extends Adapter<OutfitGalleryAdapter.ViewHolder> {
 
-    private List<String> pictureReferences;
+    private List<String> outfitReferences;
+    private List<String> fileNameReferences;
     private Context mContext;
     private String userID;
     private FirebaseStorage storage = FirebaseStorage.getInstance();
+    private FirebaseDatabase database = FirebaseDatabase.getInstance();
     private Uri picUri;
 
-    public OutfitGalleryAdapter(Context context, List<String> picRefs, String uID)
+    public OutfitGalleryAdapter(Context context, List<String> outfitRefs, List<String> imgNameRefs, String uID)
     {
         mContext = context;
-        pictureReferences = picRefs;
+        outfitReferences = outfitRefs;
+        fileNameReferences = imgNameRefs;
         userID = uID;
     }
 
@@ -38,11 +47,13 @@ public class OutfitGalleryAdapter extends Adapter<OutfitGalleryAdapter.ViewHolde
     public class ViewHolder extends RecyclerView.ViewHolder {
         ConstraintLayout parentLayout;
         ImageView galleryItem;
+        TextView testText;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             parentLayout = itemView.findViewById(R.id.constraintLayout_outfitGall);
             galleryItem = itemView.findViewById(R.id.imageView_gallery_item);
+            testText = itemView.findViewById(R.id.testText_textview);
         }
     }
 
@@ -58,28 +69,31 @@ public class OutfitGalleryAdapter extends Adapter<OutfitGalleryAdapter.ViewHolde
     @Override
     public void onBindViewHolder(@NonNull final OutfitGalleryAdapter.ViewHolder holder, int position) {
         final int pos = position;
-        String picName = pictureReferences.get(pos);
+        String outfitID = outfitReferences.get(pos);
+        String fileName = fileNameReferences.get(pos);
 
-        StorageReference pathReference = storage.getReference().child(userID + "/uploads/" + picName);
+        DatabaseReference outfitDBRef = database.getReference().child("outfits").child(outfitID);
+        StorageReference outfitStorageRef = storage.getReference().child(userID).child("outfits").child(outfitID);
 
-        pathReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+        outfitDBRef.child("downloadURL").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onSuccess(Uri uri) {
-                picUri = uri;
-                Picasso.get().load(picUri).fit().into(holder.galleryItem);
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                String url = dataSnapshot.getValue().toString();
+                Picasso.get().load(url).fit().into(holder.galleryItem);
             }
-        }).addOnFailureListener(new OnFailureListener() {
+
             @Override
-            public void onFailure(@NonNull Exception e) {
+            public void onCancelled(@NonNull DatabaseError databaseError) {
 
             }
         });
+
 
     }
 
     @Override
     public int getItemCount() {
-        return pictureReferences.size();
+        return outfitReferences.size();
     }
 
 

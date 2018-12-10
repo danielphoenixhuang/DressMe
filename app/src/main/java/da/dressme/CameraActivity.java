@@ -124,6 +124,8 @@ public class CameraActivity extends AppCompatActivity {
 
     private UploadTask uploadTask;
 
+    private String outfitID;
+
     private FirebaseAuth mAuth = FirebaseAuth.getInstance();
     private FirebaseUser user;
     private String userID;
@@ -214,7 +216,7 @@ public class CameraActivity extends AppCompatActivity {
         }
 
         //Assign Storage Reference to User's folder
-        userFolderStorageRef = mStorageRef.child(userID);
+        userFolderStorageRef = mStorageRef;
         userDatabaseRef = FirebaseDatabase.getInstance().getReference().child(userID).child("uploads");
     }
 
@@ -251,7 +253,7 @@ public class CameraActivity extends AppCompatActivity {
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
 
             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-            final String imageFileName = "image_" + timeStamp + ".jpeg";
+            final String imageFileName = timeStamp + ".jpeg";
             imgname = imageFileName;
 
             file = new File(path, imageFileName);
@@ -285,7 +287,8 @@ public class CameraActivity extends AppCompatActivity {
 
                 private void upload(byte[] bytes) {
                     Uri urifile = Uri.fromFile(file);
-                    final StorageReference uploadRef = userFolderStorageRef.child("uploads/" + imageFileName);
+                    outfitID = userDatabaseRef.push().getKey();
+                    final StorageReference uploadRef = userFolderStorageRef.child(userID + "/outfits/" + outfitID + "/" + userID + "#" + outfitID + "#" + imageFileName);
                     Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                     final Bitmap bitmap = RotateBitmap(bmp, 90);
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -326,11 +329,11 @@ public class CameraActivity extends AppCompatActivity {
                         public void onComplete(@NonNull Task<Uri> task) {
                             if (task.isSuccessful()) {
                                 Uri downloadUri = task.getResult();
-                                final String key = userDatabaseRef.push().getKey();
-                                String imageKey = key;
                                 HashMap<String, Object> updates = new HashMap<>();
-                                updates.put("/users/" + userID + "/uploads/" + key, imageFileName);
-                                updates.put("/uploads/" + key, downloadUri.toString());
+                                updates.put("/users/" + userID + "/uploads/" + outfitID, userID + "#" + imageFileName);
+                                updates.put("/outfits/" + outfitID + "/image", userID + "#" + imageFileName);
+                                updates.put("outfits/" + outfitID + "/downloadURL", downloadUri.toString());
+
 
                                 FirebaseDatabase.getInstance().getReference().updateChildren(updates).addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override

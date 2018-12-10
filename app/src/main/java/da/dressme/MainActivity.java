@@ -60,6 +60,9 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView gallery;
     private LinearLayoutManager fLinearManager;
     private List<String> picList;
+    private List<String> fileList;
+
+    private String outfitID;
 
     private OutfitGalleryAdapter GA;
 
@@ -95,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void setUpRecyclerView() {
         gallery = findViewById(R.id.recyclerView_outfits_gallery);
-        FirebaseDatabase data = FirebaseDatabase.getInstance();
+        final FirebaseDatabase data = FirebaseDatabase.getInstance();
 
         gallery.setHasFixedSize(false);
 
@@ -104,16 +107,19 @@ public class MainActivity extends AppCompatActivity {
         gallery.setLayoutManager(fLinearManager);
 
         picList = new ArrayList<>();
+        fileList = new ArrayList<>();
 
         DatabaseReference ref = data.getReference().child("users").child(userID).child("uploads");
         ref.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 picList.clear();
+                fileList.clear();
                 for (DataSnapshot test: dataSnapshot.getChildren())
                 {
-                    picList.add(test.getValue().toString());
+                    picList.add(test.getKey().toString());
                     //Toast.makeText(getApplicationContext(), test.getValue().toString(), Toast.LENGTH_LONG).show();
+                    fileList.add(test.getValue().toString());
                 }
 
                 GA.notifyDataSetChanged();
@@ -125,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        GA = new OutfitGalleryAdapter(this, picList, userID);
+        GA = new OutfitGalleryAdapter(this, picList, fileList, userID);
         gallery.setAdapter(GA);
         gallery.setItemAnimator(new DefaultItemAnimator());
 
@@ -158,10 +164,12 @@ public class MainActivity extends AppCompatActivity {
             progressDialog.setTitle("Uploading your ugly photo....");
             progressDialog.show();
 
-            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-            imageFileName = "image_" + timeStamp + ".jpeg";
+            outfitID = userDatabaseRef.push().getKey();
 
-            uploadRef = mStorageRef.child(userID).child("uploads/" + imageFileName);
+            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+            imageFileName = timeStamp + ".jpeg";
+
+            uploadRef = mStorageRef.child(userID + "/outfits/" + outfitID + "/" + userID + "#" + outfitID + "#" + imageFileName);
 
             uploadTask = uploadRef.putFile(filePath);
                     uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -210,11 +218,11 @@ public class MainActivity extends AppCompatActivity {
             public void onComplete(@NonNull Task<Uri> task) {
                 if (task.isSuccessful()) {
                     Uri downloadUri = task.getResult();
-                    final String key = userDatabaseRef.push().getKey();
-                    String imageKey = key;
+                    //final String key = userDatabaseRef.push().getKey();
                     HashMap<String, Object> updates = new HashMap<>();
-                    updates.put("/users/" + userID + "/uploads/" + key, imageFileName);
-                    updates.put("/uploads/" + key, downloadUri.toString());
+                    updates.put("/users/" + userID + "/uploads/" + outfitID, userID + "#" + imageFileName);
+                    updates.put("/outfits/" + outfitID + "/image", userID + "#" + imageFileName);
+                    updates.put("outfits/" + outfitID + "/downloadURL", downloadUri.toString());
 
                     FirebaseDatabase.getInstance().getReference().updateChildren(updates).addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
