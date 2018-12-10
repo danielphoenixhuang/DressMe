@@ -1,6 +1,7 @@
 package da.dressme;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
@@ -9,6 +10,7 @@ import android.support.v7.widget.RecyclerView.Adapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -31,6 +33,7 @@ public class OutfitGalleryAdapter extends Adapter<OutfitGalleryAdapter.ViewHolde
     private List<String> fileNameReferences;
     private Context mContext;
     private String userID;
+    private Button analButt;
     private FirebaseStorage storage = FirebaseStorage.getInstance();
     private FirebaseDatabase database = FirebaseDatabase.getInstance();
     private Uri picUri;
@@ -54,6 +57,7 @@ public class OutfitGalleryAdapter extends Adapter<OutfitGalleryAdapter.ViewHolde
             parentLayout = itemView.findViewById(R.id.constraintLayout_outfitGall);
             galleryItem = itemView.findViewById(R.id.imageView_gallery_item);
             testText = itemView.findViewById(R.id.testText_textview);
+            analButt = itemView.findViewById(R.id.button_viewAnal);
         }
     }
 
@@ -69,8 +73,19 @@ public class OutfitGalleryAdapter extends Adapter<OutfitGalleryAdapter.ViewHolde
     @Override
     public void onBindViewHolder(@NonNull final OutfitGalleryAdapter.ViewHolder holder, int position) {
         final int pos = position;
-        String outfitID = outfitReferences.get(pos);
-        String fileName = fileNameReferences.get(pos);
+        final String outfitID = outfitReferences.get(pos);
+        final String fileName = fileNameReferences.get(pos);
+
+        analButt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent analIntent = new Intent(mContext, AnalysisActivity.class);
+                analIntent.putExtra("userID", userID);
+                analIntent.putExtra("outfitID", outfitID);
+                analIntent.putExtra("fileName", fileName);
+                mContext.startActivity(analIntent);
+            }
+        });
 
         DatabaseReference outfitDBRef = database.getReference().child("outfits").child(outfitID);
         StorageReference outfitStorageRef = storage.getReference().child(userID).child("outfits").child(outfitID);
