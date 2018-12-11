@@ -92,16 +92,23 @@ public class OutfitGalleryAdapter extends Adapter<OutfitGalleryAdapter.ViewHolde
         DatabaseReference outfitDBRef = database.getReference().child("outfits").child(outfitID);
         StorageReference outfitStorageRef = storage.getReference().child(userID).child("outfits").child(outfitID);
 
-        outfitDBRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        outfitDBRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 String url = dataSnapshot.child("downloadURL").getValue().toString();
                 Picasso.get().load(url).fit().into(holder.galleryItem);
 
-                String topColor1 = dataSnapshot.child("top_color_1").getValue().toString();
-                String topColor2 = dataSnapshot.child("top_color_2").getValue().toString();
-                String botColor1 = dataSnapshot.child("bot_color_1").getValue().toString();
-                String botColor2 = dataSnapshot.child("bot_color_2").getValue().toString();
+                String topColor1 = "load";
+                String topColor2 = "load";
+                String botColor1 = "load";
+                String botColor2 = "load";
+
+                if(dataSnapshot.child("top_color_1").exists() && dataSnapshot.child("top_color_2").exists() && dataSnapshot.child("bot_color_1").exists() && dataSnapshot.child("bot_color_2").exists()) {
+                    topColor1 = dataSnapshot.child("top_color_1").getValue().toString();
+                    topColor2 = dataSnapshot.child("top_color_2").getValue().toString();
+                    botColor1 = dataSnapshot.child("bot_color_1").getValue().toString();
+                    botColor2 = dataSnapshot.child("bot_color_2").getValue().toString();
+                }
 
                 holder.testText.setText(colorMatch(topColor1, topColor2, botColor1, botColor2));
             }

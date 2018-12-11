@@ -125,7 +125,7 @@ public class ColorAnalysisClass {
                 else if(pinkTone.contains(topColor2) && pinkTone.contains(bottomColor1) && pinkTone.contains(bottomColor2))
                     return "matching - tonal";
                 else
-                    return "colors don't match, consider changing your pants!";
+                    return "Colors don't match! Try " + pinkRedComp.toString() + " for more complementary colors, and " + pinkTone.toString() + " for more tonal colors." ;
 
             case "red":
                 if(pinkRedComp.contains(topColor2) && pinkRedComp.contains(bottomColor1) && pinkRedComp.contains(bottomColor2))
@@ -133,7 +133,7 @@ public class ColorAnalysisClass {
                 else if(redTone.contains(topColor2) && redTone.contains(bottomColor1) && redTone.contains(bottomColor2))
                     return "matching - tonal";
                 else
-                    return "colors don't match, consider changing your pants!";
+                    return "Colors don't match! Try " + pinkRedComp.toString() + " for more complementary colors, and " + redTone.toString() + " for more tonal colors.";
 
             case "orange":
                 if(orangeComp.contains(topColor2) && orangeComp.contains(bottomColor1) && orangeComp.contains(bottomColor2))
@@ -141,7 +141,7 @@ public class ColorAnalysisClass {
                 else if(orangeTone.contains(topColor2) && orangeTone.contains(bottomColor1) && orangeTone.contains(bottomColor2))
                     return "matching - tonal";
                 else
-                    return "colors don't match, consider changing your pants!";
+                    return "Colors don't match! Try " + orangeComp.toString() + " for more complementary colors, and " + orangeTone.toString() + " for more tonal colors.";
 
             case "beige":
                 if(beigeComp.contains(topColor2) && beigeComp.contains(bottomColor1) && beigeComp.contains(bottomColor2))
@@ -149,7 +149,7 @@ public class ColorAnalysisClass {
                 else if(beigeTone.contains(topColor2) && beigeTone.contains(bottomColor1) && beigeTone.contains(bottomColor2))
                     return "matching - tonal";
                 else
-                    return "colors don't match, consider changing your pants!";
+                    return "Colors don't match! Try " + beigeComp.toString() + " for more complementary colors, and " + beigeTone.toString() + " for more tonal colors.";
 
             case "yellow":
                 if(yellowComp.contains(topColor2) && yellowComp.contains(bottomColor1) && yellowComp.contains(bottomColor2))
@@ -157,7 +157,7 @@ public class ColorAnalysisClass {
                 else if(yellowTone.contains(topColor2) && yellowTone.contains(bottomColor1) && yellowTone.contains(bottomColor2))
                     return "matching - tonal";
                 else
-                    return "colors don't match, consider changing your pants!";
+                    return "Colors don't match! Try " + yellowComp.toString() + " for more complementary colors, and " + yellowTone.toString() + " for more tonal colors.";
 
             case "green":
                 if(greenComp.contains(topColor2) && greenComp.contains(bottomColor1) && greenComp.contains(bottomColor2))
@@ -165,7 +165,7 @@ public class ColorAnalysisClass {
                 else if(greenTone.contains(topColor2) && greenTone.contains(bottomColor1) && greenTone.contains(bottomColor2))
                     return "matching - tonal";
                 else
-                    return "colors don't match, consider changing your pants!";
+                    return "Colors don't match! Try " + greenComp.toString() + " for more complementary colors, and " + greenTone.toString() + " for more tonal colors.";
 
             case "light blue":
                 if(lightBlueComp.contains(topColor2) && lightBlueComp.contains(bottomColor1) && lightBlueComp.contains(bottomColor2))
@@ -173,7 +173,7 @@ public class ColorAnalysisClass {
                 else if(lightBlueTone.contains(topColor2) && lightBlueTone.contains(bottomColor1) && lightBlueTone.contains(bottomColor2))
                     return "matching - tonal";
                 else
-                    return "colors don't match, consider changing your pants!";
+                    return "Colors don't match! Try " + lightBlueComp.toString() + " for more complementary colors, and " + lightBlueTone.toString() + " for more tonal colors.";
 
             case "dark blue":
                 if(darkBlueComp.contains(topColor2) && darkBlueComp.contains(bottomColor1) && darkBlueComp.contains(bottomColor2))
@@ -181,7 +181,7 @@ public class ColorAnalysisClass {
                 else if(darkBlueTone.contains(topColor2) && darkBlueTone.contains(bottomColor1) && darkBlueTone.contains(bottomColor2))
                     return "matching - tonal";
                 else
-                    return "colors don't match, consider changing your pants!";
+                    return "Colors don't match! Try " + darkBlueComp.toString() + " for more complementary colors, and " + darkBlueTone.toString() + " for more tonal colors.";
 
             case "purple":
                 if(purpleComp.contains(topColor2) && purpleComp.contains(bottomColor1) && purpleComp.contains(bottomColor2))
@@ -189,7 +189,7 @@ public class ColorAnalysisClass {
                 else if(purpleTone.contains(topColor2) && purpleTone.contains(bottomColor1) && purpleTone.contains(bottomColor2))
                     return "matching - tonal";
                 else
-                    return "colors don't match, consider changing your pants!";
+                    return "Colors don't match! Try " + purpleComp.toString() + " for more complementary colors, and " + purpleTone.toString() + " for more tonal colors.";
 
             case "brown":
                 if(brownComp.contains(topColor2) && brownComp.contains(bottomColor1) && brownComp.contains(bottomColor2))
@@ -197,7 +197,7 @@ public class ColorAnalysisClass {
                 else if(brownTone.contains(topColor2) && brownTone.contains(bottomColor1) && brownTone.contains(bottomColor2))
                     return "matching - tonal";
                 else
-                    return "colors don't match, consider changing your pants!";
+                    return "Colors don't match! Try " + brownComp.toString() + " for more complementary colors, and " + brownTone.toString() + " for more tonal colors.";
 
             case "grey":
                 if(greyComp.contains(topColor2) && greyComp.contains(bottomColor1) && greyComp.contains(bottomColor2))
@@ -205,13 +205,16 @@ public class ColorAnalysisClass {
                 else if(greyTone.contains(topColor2) && greyTone.contains(bottomColor1) && greyTone.contains(bottomColor2))
                     return "matching - tonal";
                 else
-                    return "colors don't match, consider changing your pants!";
+                    return "Colors don't match! Try " + greyComp.toString() + " for more complementary colors, and " + greyTone.toString() + " for more tonal colors.";
 
             case "black":
                 return "Black goes well with anything!";
 
             case "white":
                 return "White goes well with anything!";
+
+            case "load":
+                return "Analyzing...";
 
             default:
                 return "Matching Error";
