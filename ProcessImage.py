@@ -242,7 +242,7 @@ port = args["port"]
 
 
 config = {
-    "apiKey"            :       "AIzaSyDCFNfEAHtbn6Uf5Q7zOwTGE8g2MuJ_YI0",
+    "apiKey"            :       "",
     "authDomain"        :       "dressme-appdatabase.firebaseapp.com",
     "databaseURL"       :       "https://dressme-appdatabase.firebaseio.com",
     "projectId"         :       "dressme-appdatabase",
